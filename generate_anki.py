@@ -8,18 +8,23 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from book_words.anki_generator import LocalAnkiGenerator
 
-# ================= Configuration =================
-# Can be overridden via CLI: `python generate_anki.py [input_words_csv] [output_anki_csv]`
-DEFAULT_INPUT_CSV = "words/dungeon_crawler_carl_all_words.csv"
-INPUT_CSV = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_INPUT_CSV
+def find_default_words() -> str:
+    """Find the first available words CSV in words/ directory."""
+    words_dir = Path("words")
+    if words_dir.exists():
+        found = [p for p in sorted(words_dir.glob("*.csv")) if p.name != ".gitkeep"]
+        if found:
+            return str(found[0])
+    return "words/sample_all_words.csv"
+
+
+INPUT_CSV = sys.argv[1] if len(sys.argv) > 1 else find_default_words()
 
 if len(sys.argv) > 2:
     OUTPUT_CSV = sys.argv[2]
-elif len(sys.argv) > 1:
+else:
     input_stem = Path(INPUT_CSV).stem.replace("_all_words", "").replace("_words", "")
     OUTPUT_CSV = f"anki_cards/{input_stem}_anki.csv"
-else:
-    OUTPUT_CSV = "anki_cards/dungeon_crawler_carl_anki.csv"
 # =================================================
 
 

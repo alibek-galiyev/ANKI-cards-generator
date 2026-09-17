@@ -11,16 +11,24 @@ from book_words.lemmatizer import VocabularyConfig, VocabularyProcessor
 
 # ================= Configuration =================
 # Can be overridden via CLI: `python main.py [path_to_book] [output_csv]`
-DEFAULT_BOOK_PATH = "books/Dungeon_Crawler_Carl_-_Matt_Dinniman.epub"
-BOOK_PATH = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_BOOK_PATH
+def find_default_book() -> str:
+    """Find the first available book in the books/ directory."""
+    books_dir = Path("books")
+    if books_dir.exists():
+        supported = {".epub", ".fb2", ".txt", ".pdf", ".mobi", ".azw", ".azw3", ".csv"}
+        found = [p for p in sorted(books_dir.iterdir()) if p.suffix.lower() in supported]
+        if found:
+            return str(found[0])
+    return "books/sample.epub"
+
+
+BOOK_PATH = sys.argv[1] if len(sys.argv) > 1 else find_default_book()
 
 if len(sys.argv) > 2:
     OUTPUT_PATH = sys.argv[2]
-elif len(sys.argv) > 1:
+else:
     book_stem = Path(BOOK_PATH).stem.lower().replace(" ", "_").replace("-", "_")
     OUTPUT_PATH = f"words/{book_stem}_all_words.csv"
-else:
-    OUTPUT_PATH = "words/dungeon_crawler_carl_all_words.csv"
 
 # Vocabulary frequency filters (Zipf score):
 ZIPF_MAX = 4.0

@@ -1,25 +1,25 @@
 # Task
-Your task is to read English words from the file `words/dungeon_crawler_carl_all_words.csv` and generate Anki flashcard data, saving the result into an output file inside `anki_cards/` (e.g., `anki_cards/dungeon_crawler_carl_anki.csv`).
+Your task is to read English words from a vocabulary CSV file (e.g. `words/<book_name>_all_words.csv`) and generate Anki flashcard data, saving the result into an output file inside `anki_cards/` (e.g., `anki_cards/<book_name>_anki.csv`).
 
 ---
 
 ## Input File
-- **Source path:** `words/dungeon_crawler_carl_all_words.csv`
+- **Source path:** `words/<book_name>_all_words.csv`
 - **Structure:** A CSV file containing a single column `word` listing one word per line (ordered by frequency in the novel).
 
 ## Output File
-- **Target path:** `anki_cards/dungeon_crawler_carl_anki.csv`
+- **Target path:** `anki_cards/<book_name>_anki.csv`
 - **Format:** Anki-compatible CSV using a semicolon (`;`) as the field delimiter.
 - **File Mode:** If the output file does not exist, create it. If it exists and you are processing subsequent batches, append the new cards to the end of the file.
 
 ---
 
 ## Batching Instructions
-Because the source file contains thousands of words, process words in batches (e.g., the top 50, 100, or a specified range of words, such as rows 1–50, 51–100):
-- Read the specified slice of words from `words/dungeon_crawler_carl_all_words.csv`.
+Because the source file may contain thousands of words, process words in batches (e.g., the top 50, 100, or a specified range of words, such as rows 1–50, 51–100):
+- Read the specified slice of words from `words/<book_name>_all_words.csv`.
 - Skip the header row (`word`).
 - Generate one card per input word.
-- Write or append the generated lines directly into `anki_cards/dungeon_crawler_carl_anki.csv`.
+- Write or append the generated lines directly into `anki_cards/<book_name>_anki.csv`.
 
 ---
 
