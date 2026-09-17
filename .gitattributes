@@ -1,0 +1,17 @@
+# Set default behavior to automatically normalize line endings
+* text=auto eol=lf
+
+# Explicitly declare text files you want to always be normalized and converted to LF on checkout
+*.py text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf
+*.csv text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
+
+# Binary files
+*.epub binary
+*.mobi binary
+*.pdf binary
+*.sqlite binary

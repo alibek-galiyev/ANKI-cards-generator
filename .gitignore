@@ -1,0 +1,73 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Local databases & caches
+*.sqlite
+*.sqlite3
+*.db
+data/*.sqlite
+data/*.db
+!data/.gitkeep
+nltk_data/
+
+# OS artifacts
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Commercial / binary eBook files (keep folder tracked via .gitkeep)
+books/*.epub
+books/*.mobi
+books/*.azw
+books/*.azw3
+books/*.pdf
+books/*.fb2
+!books/.gitkeep
+
+# Generated output files (keep folders tracked via .gitkeep)
+words/*.csv
+!words/.gitkeep
+anki_cards/*.csv
+!anki_cards/.gitkeep

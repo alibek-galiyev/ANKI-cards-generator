@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "book-words"
+version = "0.1.0"
+description = "Extract book vocabulary and generate Anki flashcards 100% locally in Python"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.15.0",
+    "ebooklib>=0.20",
+    "en-core-web-sm",
+    "lemminflect>=0.2.3",
+    "mobi>=0.4.1",
+    "nltk>=3.10.3",
+    "pypdf>=6.19.0",
+    "spacy>=3.8.16",
+    "translators>=6.0.4",
+    "wordfreq>=3.1.1",
+]
+
+[project.scripts]
+book-words = "book_words.cli:main"
+
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
