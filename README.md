@@ -2,17 +2,20 @@
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![100% Local](https://img.shields.io/badge/AI-100%25%20Local%20(Zero%20API%20Keys)-success.svg)](#features)
+[![Generation Modes](https://img.shields.io/badge/Generation-Local%20Python%20%7C%20LLM-success.svg)](#generation-modes-choose-your-path)
 [![Anki Ready](https://img.shields.io/badge/export-Anki%20CSV-blueviolet.svg)](#importing-into-anki)
 
-Extract high-yield English vocabulary from any book or document and generate ready-to-import Anki flashcards with English definitions, Russian translations, and context sentences — **100% locally with zero cloud API keys or external LLM requests**.
+Extract high-yield English vocabulary from any book or document and generate ready-to-import Anki flashcards with English definitions, Russian translations, and context sentences.
+
+Supports two flexible workflows:
+1. **100% Local Python Libraries (Offline, Zero API keys)** — Fast, private, free, and powered by WordNet, `spaCy`, and SQLite caching.
+2. **LLM-Assisted Generation (Gemini, Claude, ChatGPT, Ollama)** — AI-crafted definitions and contextual story sentences guided by a pre-tuned system prompt (`prompt.md`).
 
 ---
 
 ## Features
 
-- **100% Local & Offline**: Uses Princeton WordNet, local linguistic pipelines, and persistent SQLite translation caching. No Gemini, OpenAI, or cloud API keys needed.
-- **Multi-Format Support**: Works seamlessly with **`.epub`**, **`.fb2`**, **`.txt`**, **`.pdf`**, **`.mobi` / `.azw3`**, and **`.csv`**.
+- **Multi-Format Ingestion**: Works seamlessly with **`.epub`**, **`.fb2`**, **`.txt`**, **`.pdf`**, **`.mobi` / `.azw3`**, and **`.csv`**.
 - **Accurate Lemmatization**: Powered by `spaCy` + `lemminflect` to correctly extract base dictionary forms without truncating irregular verbs.
 - **Smart Vocabulary Filtering**:
   - Automatically filters out proper nouns (character names, fantasy races, locations).
@@ -21,11 +24,12 @@ Extract high-yield English vocabulary from any book or document and generate rea
 - **High-Impact Prioritization**: Words are ranked by occurrence frequency in your book — the words that appear 50–100+ times appear at the top of your study deck!
 - **Rich Anki Flashcards**: Each card includes:
   - Base lemma (`Front`)
-  - English definition (`WordNet`)
+  - English definition
   - Frequency importance rating (1–10 based on Zipf score)
   - Natural Russian translation
   - Morphological derivation / base form
-  - Context sentence from the novel or dictionary
+  - Context example sentence
+- **Two Generation Engines**: Choose between 100% local Python scripts or LLM-prompted generation depending on your needs.
 
 ---
 
@@ -38,11 +42,21 @@ flowchart TD
     NLP --> FILT["Zipf & Proper Noun Filter"]
     FILT --> WORDS["words/<book>_all_words.csv"]
     
-    WORDS --> GEN["Local Anki Generator"]
-    GEN --> WN["NLTK WordNet (English Definitions)"]
-    GEN --> TRANS["Multi-Engine Translator + SQLite Cache (Russian)"]
-    GEN --> SENT["Context Sentence Extractor"]
+    WORDS --> MODE{Choose Generation Mode}
+    
+    subgraph LOCAL["Option 1: Local Python Pipeline (Offline)"]
+        MODE -->|book-words anki / generate_anki.py| GEN["Local Anki Generator"]
+        GEN --> WN["NLTK WordNet (EN Definitions)"]
+        GEN --> TRANS["Multi-Engine Translator + SQLite Cache (RU)"]
+        GEN --> SENT["Context Sentence Builder"]
+    end
+    
+    subgraph LLM["Option 2: LLM-Assisted (Cloud / Local AI)"]
+        MODE -->|prompt.md + word batches| AI["LLM (Gemini, Claude, ChatGPT, Ollama)"]
+    end
+    
     WN & TRANS & SENT --> ANKI["anki_cards/<book>_anki.csv"]
+    AI --> ANKI
 ```
 
 ---
@@ -53,16 +67,16 @@ This project uses [`uv`](https://github.com/astral-sh/uv) for fast, reproducible
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/book-words.git
-cd book-words
+git clone https://github.com/alibek-galiyev/ANKI-cards-generator.git
+cd ANKI-cards-generator
 
-# Install all dependencies and spaCy model
+# Install dependencies and spaCy model
 uv sync
 ```
 
 ---
 
-## Quick Start Guide
+## Workflow Step-by-Step
 
 ### Step 1: Place Your Book
 Drop any eBook or text document into the `books/` folder:
@@ -79,21 +93,76 @@ Extract and rank the unfamiliar words from your book:
 # Option A: Run via unified CLI
 uv run book-words extract books/Dungeon_Crawler_Carl.epub
 
-# Option B: Run via script
-uv run python main.py books/Dungeon_Crawler_Carl.epub
+# Option B: Run via script (auto-detects book in books/)
+uv run python main.py
 ```
 *Output is automatically saved to `words/<book_name>_all_words.csv`.*
 
-### Step 3: Generate Anki Flashcards
-Generate the complete Anki-ready flashcard deck:
+---
+
+## Generation Modes: Choose Your Path
+
+Once you have `words/<book_name>_all_words.csv`, choose how to generate your Anki cards:
+
+| Feature | 🐍 Option 1: Local Python Libraries | 🤖 Option 2: LLM (Gemini, Claude, GPT) |
+| :--- | :--- | :--- |
+| **Internet Access** | **Zero needed** (100% offline with cached translations) | Required for cloud LLMs (unless using local Ollama) |
+| **API Keys / Cost** | **Free**, zero API keys | May require API keys, credits, or web subscription |
+| **Speed** | **Fast** (hundreds of words per minute) | Slower (rate limits, tokens per minute) |
+| **English Definitions**| Princeton WordNet (precise, standard dictionary) | Generative (natural, context-adapted) |
+| **Russian Translation**| Local multi-engine with persistent SQLite cache | Natural context-aware LLM translation |
+| **Context Sentences**  | WordNet examples & dictionary sentences | Custom generated sentences or novel context |
+| **Best For** | Large vocabulary decks (500–5,000+ words), privacy, offline work | Curated top-100 high-yield lists, nuanced literary phrasing |
+
+---
+
+### Option 1: 100% Local Python Libraries (Default)
+
+Use standard Python NLP tools with no external AI calls:
+- **NLTK Princeton WordNet**: Generates dictionary definitions and example sentences.
+- **spaCy + LemmInflect**: Handles base forms and derivations.
+- **Persistent SQLite Translation Cache** (`data/translations.sqlite`): Translates words to Russian once, then serves them instantly offline from disk.
+
+#### How to Run:
 ```bash
-# Option A: Run via unified CLI
+# Via unified CLI
 uv run book-words anki words/dungeon_crawler_carl_all_words.csv
 
-# Option B: Run via script
-uv run python generate_anki.py words/dungeon_crawler_carl_all_words.csv
+# Or via script (auto-detects latest words CSV in words/)
+uv run python generate_anki.py
 ```
-*Output is saved to `anki_cards/<book_name>_anki.csv`.*
+
+*Output file:* `anki_cards/<book_name>_anki.csv`
+
+---
+
+### Option 2: LLM-Assisted Generation (Gemini / Claude / ChatGPT / Ollama)
+
+If you prefer rich, AI-generated explanations and novel-specific context sentences, you can feed batches of words to an LLM using the included [`prompt.md`](prompt.md).
+
+#### How to Run with an LLM:
+
+1. **Open [`prompt.md`](prompt.md)** in your editor. It contains strict formatting instructions that guarantee Anki-compliant CSV output (proper HTML tags, semicolon delimiters, no internal semicolons).
+2. **Copy the prompt** into your LLM of choice (Google Gemini, Anthropic Claude, OpenAI ChatGPT, or local Ollama).
+3. **Provide a batch of words** from your extracted `words/<book_name>_all_words.csv` (e.g. rows 1–100 for the highest-frequency words):
+   ```text
+   Process the following words (1 to 50):
+   dungeon
+   crawler
+   smite
+   aberration
+   ...
+   ```
+4. **Copy the LLM's response** and paste or append it into your card file:
+   ```bash
+   # Save or append cards
+   cat << 'EOF' >> anki_cards/<book_name>_anki.csv
+   dungeon;<b>Present form:</b> dungeon<br><b>Definition (EN):</b> an underground prison or fortress cell<br><b>Importance (1–10):</b> 6<br><b>Translation (RU):</b> подземелье<br><b>Formed from:</b> Base form<br><b>Simple sentence:</b> The hero escaped from the dark dungeon.
+   EOF
+   ```
+
+> [!TIP]
+> Processing words in batches of 50–100 ensures the LLM does not hallucinate, truncate responses, or exceed context output limits.
 
 ---
 
@@ -145,7 +214,7 @@ All settings can be customized via CLI flags or modified in `src/book_words/lemm
 ## Project Structure
 
 ```
-book-words/
+ANKI-cards-generator/
 ├── src/
 │   └── book_words/
 │       ├── __init__.py
@@ -155,6 +224,7 @@ book-words/
 │       └── cli.py              # Unified CLI interface
 ├── main.py                     # Vocabulary extraction entrypoint script
 ├── generate_anki.py            # Local Anki generator entrypoint script
+├── prompt.md                   # System prompt for LLM-assisted card generation
 ├── books/                      # Drop your book files here (.gitkeep)
 ├── words/                      # Extracted vocabulary CSV files (.gitkeep)
 ├── anki_cards/                 # Ready-to-import Anki CSV decks (.gitkeep)
