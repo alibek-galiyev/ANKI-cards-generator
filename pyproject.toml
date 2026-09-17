@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "book-words"
 version = "0.1.0"
-description = "Extract book vocabulary and generate Anki flashcards 100% locally in Python"
+description = "Extract book vocabulary and generate Anki flashcards locally in Python or via LLM"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.13"

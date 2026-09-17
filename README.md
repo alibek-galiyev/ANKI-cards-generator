@@ -37,22 +37,23 @@ Supports two flexible workflows:
 
 ```mermaid
 flowchart TD
-    BOOK["Book File (.epub, .fb2, .pdf, .mobi, .txt, .csv)"] --> EXT["Multi-Format Extractor"]
+    BOOK["Book File (.epub, .fb2, .pdf, .mobi, .txt, .csv)"] --> MAIN["Unified Command: main.py / book-words"]
+    MAIN --> EXT["Multi-Format Extractor"]
     EXT --> NLP["spaCy + LemmInflect Pipeline"]
     NLP --> FILT["Zipf & Proper Noun Filter"]
     FILT --> WORDS["words/<book>_all_words.csv"]
     
-    WORDS --> MODE{Choose Generation Mode}
+    WORDS --> MODE{Generation Mode}
     
-    subgraph LOCAL["Option 1: Local Python Pipeline (Offline)"]
-        MODE -->|book-words anki / generate_anki.py| GEN["Local Anki Generator"]
+    subgraph LOCAL["Option 1: Python Mode (Offline)"]
+        MODE -->|--mode python| GEN["Local Anki Generator"]
         GEN --> WN["NLTK WordNet (EN Definitions)"]
         GEN --> TRANS["Multi-Engine Translator + SQLite Cache (RU)"]
         GEN --> SENT["Context Sentence Builder"]
     end
     
-    subgraph LLM["Option 2: LLM-Assisted (Cloud / Local AI)"]
-        MODE -->|prompt.md + word batches| AI["LLM (Gemini, Claude, ChatGPT, Ollama)"]
+    subgraph LLM["Option 2: LLM Mode (Cloud / Local AI)"]
+        MODE -->|--mode llm| AI["LLM (Gemini, Claude, ChatGPT, Ollama)"]
     end
     
     WN & TRANS & SENT --> ANKI["anki_cards/<book>_anki.csv"]
@@ -76,33 +77,39 @@ uv sync
 
 ---
 
-## Workflow Step-by-Step
+## Usage
 
-### Step 1: Place Your Book
-Drop any eBook or text document into the `books/` folder:
-```
-books/
-├── Dungeon_Crawler_Carl.epub
-├── Alice_in_Wonderland.fb2
-└── Dracula.txt
-```
+BookWords features a unified command interface that performs vocabulary extraction and Anki card generation in a single step.
 
-### Step 2: Extract Vocabulary
-Extract and rank the unfamiliar words from your book:
 ```bash
-# Option A: Run via unified CLI
-uv run book-words extract books/Dungeon_Crawler_Carl.epub
-
-# Option B: Run via script (auto-detects book in books/)
-uv run python main.py
+uv run main.py <book_path> [output_anki_csv] [--mode python|llm] [--min-count 1] [--zipf-max 4.0] [--zipf-min 0.5] [--sort-by book_count|rarity]
 ```
-*Output is automatically saved to `words/<book_name>_all_words.csv`.*
+
+### Examples
+
+**Python mode (Default)**: Extract vocabulary and generate Anki cards locally.
+```bash
+uv run main.py books/MyBook.epub
+```
+
+**Python mode with custom output**:
+```bash
+uv run main.py books/MyBook.epub my_deck.csv
+```
+
+**Python mode with tuning**: Increase minimum occurrence and adjust Zipf filter.
+```bash
+uv run main.py books/MyBook.epub --min-count 3 --zipf-max 3.5
+```
+
+**LLM mode**: Extract vocabulary and get instructions for LLM-assisted generation.
+```bash
+uv run main.py books/MyBook.epub --mode llm
+```
 
 ---
 
 ## Generation Modes: Choose Your Path
-
-Once you have `words/<book_name>_all_words.csv`, choose how to generate your Anki cards:
 
 | Feature | 🐍 Option 1: Local Python Libraries | 🤖 Option 2: LLM (Gemini, Claude, GPT) |
 | :--- | :--- | :--- |
@@ -116,35 +123,25 @@ Once you have `words/<book_name>_all_words.csv`, choose how to generate your Ank
 
 ---
 
-### Option 1: 100% Local Python Libraries (Default)
+### Option 1: Local Python Mode (`--mode python`)
 
 Use standard Python NLP tools with no external AI calls:
 - **NLTK Princeton WordNet**: Generates dictionary definitions and example sentences.
 - **spaCy + LemmInflect**: Handles base forms and derivations.
 - **Persistent SQLite Translation Cache** (`data/translations.sqlite`): Translates words to Russian once, then serves them instantly offline from disk.
 
-#### How to Run:
-```bash
-# Via unified CLI
-uv run book-words anki words/dungeon_crawler_carl_all_words.csv
-
-# Or via script (auto-detects latest words CSV in words/)
-uv run python generate_anki.py
-```
-
-*Output file:* `anki_cards/<book_name>_anki.csv`
+Output is automatically saved to `anki_cards/<book_name>_anki.csv`.
 
 ---
 
-### Option 2: LLM-Assisted Generation (Gemini / Claude / ChatGPT / Ollama)
+### Option 2: LLM Mode (`--mode llm`)
 
 If you prefer rich, AI-generated explanations and novel-specific context sentences, you can feed batches of words to an LLM using the included [`prompt.md`](prompt.md).
 
-#### How to Run with an LLM:
-
-1. **Open [`prompt.md`](prompt.md)** in your editor. It contains strict formatting instructions that guarantee Anki-compliant CSV output (proper HTML tags, semicolon delimiters, no internal semicolons).
-2. **Copy the prompt** into your LLM of choice (Google Gemini, Anthropic Claude, OpenAI ChatGPT, or local Ollama).
-3. **Provide a batch of words** from your extracted `words/<book_name>_all_words.csv` (e.g. rows 1–100 for the highest-frequency words):
+1. **Extract vocabulary**: `uv run main.py books/MyBook.epub --mode llm`
+2. **Open [`prompt.md`](prompt.md)** in your editor. It contains strict formatting instructions that guarantee Anki-compliant CSV output.
+3. **Copy the prompt** into your LLM of choice (Google Gemini, Anthropic Claude, OpenAI ChatGPT, or local Ollama).
+4. **Provide a batch of words** from your extracted `words/<book_name>_all_words.csv` (e.g. rows 1–100):
    ```text
    Process the following words (1 to 50):
    dungeon
@@ -153,7 +150,7 @@ If you prefer rich, AI-generated explanations and novel-specific context sentenc
    aberration
    ...
    ```
-4. **Copy the LLM's response** and paste or append it into your card file:
+5. **Copy the LLM's response** and paste or append it into your card file:
    ```bash
    # Save or append cards
    cat << 'EOF' >> anki_cards/<book_name>_anki.csv
@@ -206,7 +203,7 @@ All settings can be customized via CLI flags or modified in `src/book_words/lemm
 | :--- | :--- | :--- |
 | `--zipf-max` | `4.0` | Words with Zipf $> 4.0$ are filtered out (excludes common everyday words). |
 | `--zipf-min` | `0.5` | Words with Zipf $< 0.5$ are filtered out (excludes non-words and typos). |
-| `--min-count` | `2` | Minimum times a word must appear in the novel to be included. |
+| `--min-count` | `1` | Minimum times a word must appear in the novel to be included. |
 | `--sort-by` | `book_count` | Sort order: `book_count` (highest-impact first) or `rarity` (rarest first). |
 
 ---
@@ -222,8 +219,7 @@ ANKI-cards-generator/
 │       ├── lemmatizer.py       # spaCy + LemmInflect NLP pipeline & Zipf scoring
 │       ├── anki_generator.py   # 100% Local Anki card generator with SQLite cache
 │       └── cli.py              # Unified CLI interface
-├── main.py                     # Vocabulary extraction entrypoint script
-├── generate_anki.py            # Local Anki generator entrypoint script
+├── main.py                     # Unified extraction & generation entrypoint
 ├── prompt.md                   # System prompt for LLM-assisted card generation
 ├── books/                      # Drop your book files here (.gitkeep)
 ├── words/                      # Extracted vocabulary CSV files (.gitkeep)
